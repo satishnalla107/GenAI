@@ -23,7 +23,7 @@ db.run("""
        """)
 
 ### requirements llm,tools,system_prompt,memory
-model = ChatGroq(model="openai/gpt-oss-20b")
+
 toolkit = SQLDatabaseToolkit(db=db,llm=model)
 tools = toolkit.get_tools()
 memory=InMemorySaver()

@@ -7,3 +7,4 @@ langchain-anthropic
 streamlit
 langchain-community
 langgraph
+pypdf
