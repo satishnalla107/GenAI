@@ -24,9 +24,7 @@ db.run("""
 
 ### requirements llm,tools,system_prompt,memory
 
-toolkit = SQLDatabaseToolkit(db=db,llm=model)
-tools = toolkit.get_tools()
-memory=InMemorySaver()
+
 
 system_prompt = """
 You are a task management assistant that interacts with a SQL database containing a 'tasks' table. 
@@ -45,6 +43,10 @@ CRUD OPERATIONS:
 Table schema: id, title, description, status(pending/in_progress/completed), created_at.
 """
 model = ChatGroq(model="openai/gpt-oss-20b",streaming=True)
+
+toolkit = SQLDatabaseToolkit(db=db,llm=model)
+tools = toolkit.get_tools()
+memory=InMemorySaver()
 
 @st.cache_resource
 def getagent():
