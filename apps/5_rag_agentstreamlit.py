@@ -1,3 +1,4 @@
+
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -11,6 +12,7 @@ from langchain.tools import tool
 from langgraph.checkpoint.memory import InMemorySaver
 
 import streamlit as st
+import os
 
 ### data in st session
 
@@ -98,10 +100,17 @@ if not st.session_state.document_uploaded:
     uploaded = st.file_uploader(label="Upload a PDF document", type="pdf", accept_multiple_files=True)
     if uploaded:
         with st.spinner("Processing the document..."):
-            path="./doc_files/"
+            path = "./doc_files/"
+
+            # Create the folder if it doesn't exist
+            os.makedirs(path, exist_ok=True)
+
             for file in uploaded:
-                with open(path+file.name, "wb") as f:
+                file_path = os.path.join(path, file.name)
+                with open(file_path, "wb") as f:
                     f.write(file.getvalue())
+
+
             process_document(path)
             st.rerun()        
 
