@@ -13,6 +13,8 @@ from langgraph.checkpoint.memory import InMemorySaver
 
 import streamlit as st
 import os
+import tempfile
+import shutil
 
 ### data in st session
 
@@ -35,7 +37,7 @@ def process_document(path):
     docs = loader.load()
 
     ##split the document into chunks
-    splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
+    splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=100)
     documents = splitter.split_documents(docs)
 
     ##Create embeddings for the document chunks
@@ -56,7 +58,7 @@ def process_document(path):
     def retriever_context(query: str) :
         """Retrieve documents relevant to the query from knowledge base."""
 
-        docs = vector_db.similarity_search(query=query, k=3)
+        docs = vector_db.similarity_search(query=query, k=5)
         context = ""
         for doc in docs:
             context += doc.page_content + "\n"
@@ -67,7 +69,7 @@ def process_document(path):
     system_prompt = """
     You are an AI assistant.
 
-    You have access to a retrieval tool called `retrieve_context`.
+    You have access to a retrieval tool called 'retriever_context'.
 
     For any question related to the uploaded PDF,
     ALWAYS call the tool first.
@@ -100,21 +102,21 @@ if not st.session_state.document_uploaded:
     uploaded = st.file_uploader(label="Upload a PDF document", type="pdf", accept_multiple_files=True)
     if uploaded:
         with st.spinner("Processing the document..."):
-            path = "./doc_files/"
+            temp_dir = tempfile.mkdtemp()
 
-            # Create the folder if it doesn't exist
-            os.makedirs(path, exist_ok=True)
-
-            for file in uploaded:
-                file_path = os.path.join(path, file.name)
-                with open(file_path, "wb") as f:
-                    f.write(file.getvalue())
-
-
-            process_document(path)
-            st.rerun()        
+        
+            try:
+                for file in uploaded:
+                    file_path = os.path.join(temp_dir, file.name)
+                    with open(file_path, "wb") as f:
+                        f.write(file.getvalue())
 
 
+                process_document(temp_dir)
+                st.rerun()        
+
+            finally:
+                shutil.rmtree(temp_dir, ignore_errors=True)
 
 
 ###chat ui
