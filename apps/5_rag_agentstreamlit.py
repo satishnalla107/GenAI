@@ -10,7 +10,7 @@ from langchain_groq import ChatGroq
 from langchain.agents import create_agent
 from langchain.tools import tool
 from langgraph.checkpoint.memory import InMemorySaver
-
+import uuid
 import streamlit as st
 import os
 import tempfile
@@ -44,10 +44,12 @@ def process_document(path):
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
     ##Create a vector store to store the document chunks and their embeddings
-
+    collection_name = str(uuid.uuid4())
     vector_db = Chroma.from_documents(
-        documents=documents, 
-        embedding=embeddings)
+    documents=documents,
+    embedding=embeddings,
+    collection_name=collection_name
+    )
 
     ###create agent - tool,llm, system prompt
     llm = ChatGroq(model="openai/gpt-oss-20b", temperature=0.0, max_tokens=1000)
