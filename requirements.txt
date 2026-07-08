@@ -15,4 +15,5 @@ langchain-huggingface
 langchain-chroma
 sentence-transformers
 pydantic
+requests
 
