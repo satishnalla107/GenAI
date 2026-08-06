@@ -5,7 +5,7 @@ load_dotenv()
 from langchain_community.document_loaders import PyPDFLoader,PyPDFDirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_community.vectorstores import Chroma,FAISS
+from langchain_chroma import Chroma
 from langchain_groq import ChatGroq
 from langchain.agents import create_agent
 from langchain.tools import tool
@@ -50,6 +50,12 @@ def process_document(path):
     embedding=embeddings,
     collection_name=collection_name
     )
+    retriever = vector_db.as_retriever(
+    search_type="mmr",
+    search_kwargs={
+        "k": 5,
+        "fetch_k": 10
+    })
 
     ###create agent - tool,llm, system prompt
     llm = ChatGroq(model="openai/gpt-oss-20b", temperature=0.0, max_tokens=1000)
@@ -57,10 +63,10 @@ def process_document(path):
 
 
     @tool
-    def retriever_context(query: str) :
+    def retriever_context(query: str) -> str:
         """Retrieve documents relevant to the query from knowledge base."""
 
-        docs = vector_db.similarity_search(query=query, k=5)
+        docs =  docs = retriever.invoke(query)
         context = ""
         for doc in docs:
             context += doc.page_content + "\n"
@@ -135,11 +141,15 @@ if st.session_state.document_uploaded and st.session_state.agent:
         st.session_state.messages.append({"role": "user", "content": query})
          
         st.chat_message("user").markdown(query)
-        response = st.session_state.agent.invoke({"messages": [{"role": "user", "content": query}]},{"configurable":{"thread_id":"1"}})                                          
-        result = response["messages"][-1].content
+        try:
+            response = st.session_state.agent.invoke({"messages": [{"role": "user", "content": query}]}, {"configurable": {"thread_id": "1"}} )
+            result = response["messages"][-1].content
+        except Exception as e:
+            result = ("Sorry! I couldn't process your request at the moment. ""Please try again.")
+            st.error(f"LLM Error: {str(e)}")
+
         st.chat_message("assistant").markdown(result)
-        
-        st.session_state.messages.append({"role": "assistant", "content": result})
+        st.session_state.messages.append({"role": "assistant", "content": result})    
 
 
 
